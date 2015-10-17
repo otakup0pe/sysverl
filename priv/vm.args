@@ -1,0 +1,4 @@
+-setcookie {{erlinit_cookie}}
++K true
++A 5
+-env ERL_MAX_PORTS 5000

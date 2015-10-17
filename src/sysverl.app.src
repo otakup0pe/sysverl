@@ -1,0 +1,5 @@
+{application, sysverl, [
+                        {description, "otp ish init scripts"},
+                        {vsn, "0.0.1"},
+                        {applications, [kernel, stdlib, sasl]}
+]}.

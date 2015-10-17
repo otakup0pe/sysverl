@@ -47,8 +47,8 @@ call(Host, M, F, A) ->
     case rpc:call(Host, M, F, A, 5000) of
         {ok, Value} ->
             Value;
-    	{badrpc, E} ->
+    	{badrpc, _E} ->
     	    error;
-    	{error, E} -> 
+    	{error, _E} -> 
     	    error
     end.

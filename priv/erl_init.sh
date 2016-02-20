@@ -6,37 +6,37 @@ usage() {
 
 service_pids() {
     SERVICE_PID=`ps ax | grep -e 'name $NODENAME' | grep heart | grep -v grep | cut -f 1 -d ' '`
-    if [ "$SERVICE_PID" != "" ] ; then
+    if [ ! -z "$SERVICE_PID" ] ; then
         HEART_PID=`ps ax | grep "heart -pid $SERVICE_PID"`
     fi
     echo "$SERVICE_PID $HEART_PID"
 }
 
 real_start() {
-    export HEART_COMMAND="$ROOTDIR/bin/{{erlinit_component}} start $*"
+    if [ -z "$IS_DOCKER" ] ; then
+        export HEART_COMMAND="$ROOTDIR/bin/{{erlinit_component}} start $*"
+        CMD_SUFFIX="-detached -heart -noinput"
+    fi
     umask 002
     $ERL \
         -name $NODENAME@$HOSTNAME \
         -args_file $ROOTDIR/config/vm.args \
         -noshell \
-        -noinput \
         ${SMPOPTIONS} \
         -config $ROOTDIR/config/{{erlinit_component}} \
         -boot $ROOTDIR/releases/$APP_VSN/{{erlinit_component}} \
-        -heart \
-        -detached \
-        $*
+        $CMD_SUFFIX $*
 }
 
 start() {
-    if [ ! -f $RUNDIR/seppuku ] ; then
+    if [ ! -f "${RUNDIR}/seppuku" ] ; then
         real_start $*
     fi
 }
 
 pid_there() {
     PID="$1"
-    if [ "$PID1" == "" ] ; then
+    if [ -z "$PID1" ] ; then
         echo 0
     else
         if [ `ps $PID | wc -l` -gt 1 ] ; then
@@ -158,9 +158,14 @@ fi
 
 HOSTNAME=$(hostname -f)
 
-if [ "$(id -u)" == "0" ]; then
-    echo "Service should not be run as root." 1>&2
-    exit
+if [ -e "/.dockerenv" ] ; then
+    echo "Docker detected!"
+    IS_DOCKER="yes"
+else
+    if [ "$(id -u)" == "0" ]; then
+        echo "Service should not be run as root." 1>&2
+        exit
+    fi
 fi
 
 START_ERL=`cat $ROOTDIR/releases/start_erl.data`
@@ -188,10 +193,14 @@ if [ -e /etc/default/{{erlinit_component}} ] ; then
     . /etc/default/{{erlinit_component}}
 fi
 
-if [ "$(which erl)" == "" ] ; then
+ERL="$(which erl)"
+if [ -z "$ERL" ] ; then
     ERL="${ROOTDIR}/bin/erl"
-else
-    ERL="$(which erl)"
+fi
+
+if [ -z "$ERL" ] ; then
+    echo "Erlang not found!"
+    exit 1
 fi
 
 for d in $(ls $ROOTDIR/lib) ; do

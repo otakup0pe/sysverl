@@ -26,6 +26,7 @@ real_start() {
         -config $ROOTDIR/config/{{erlinit_component}} \
         -boot $ROOTDIR/releases/$APP_VSN/{{erlinit_component}} \
         $CMD_SUFFIX $*
+    exit $?
 }
 
 start() {
@@ -99,6 +100,7 @@ shell() {
         -config $ROOTDIR/config/shell \
         -boot $ROOTDIR/releases/start_clean \
         $*
+    exit $?
 }
 
 rescue() {
@@ -109,6 +111,7 @@ rescue() {
 	    -config $ROOTDIR/config/{{erlinit_component}} \
         -boot $ROOTDIR/releases/$APP_VSN/{{erlinit_component}} \
         $*
+    exit $?
 }
 
 hotload() {
@@ -121,6 +124,7 @@ hotload() {
         -s init stop \
         -config $ROOTDIR/config/shell \
         -boot $ROOTDIR/releases/start_clean
+    exit $?
 }
 
 status() {
@@ -135,8 +139,10 @@ status() {
         -boot $ROOTDIR/releases/start_clean
     if [ "$?" == "0" ] ; then
         echo "OK: $NODENAME is alive and hopefully well"
+        exit 0
     else
         echo "CRITICAL: $NODENAME is not responding"
+        exit 1
     fi
 }
 
@@ -243,5 +249,3 @@ case "$CMD" in
 esac
 
 cd $DDIR
-
-exit 0
